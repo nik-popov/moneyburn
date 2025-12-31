@@ -1,9 +1,6 @@
-import {
-  type Fee,
-  type InsertFee,
-  type Log,
-  type InsertLog
-} from "@shared/schema";
+import { type Fee, type InsertFee, type Log, type InsertLog, fees, logs } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   getFees(): Promise<Fee[]>;
@@ -13,39 +10,28 @@ export interface IStorage {
   deleteLog(id: number): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private fees: Fee[] = [];
-  private logs: Log[] = [];
-  private feeIdCounter = 1;
-  private logIdCounter = 1;
-
+export class DatabaseStorage implements IStorage {
   async getFees(): Promise<Fee[]> {
-    return this.fees;
+    return await db.select().from(fees);
   }
 
   async createFee(insertFee: InsertFee): Promise<Fee> {
-    const fee: Fee = { ...insertFee, id: this.feeIdCounter++ };
-    this.fees.push(fee);
+    const [fee] = await db.insert(fees).values(insertFee).returning();
     return fee;
   }
 
   async getLogs(): Promise<Log[]> {
-    return this.logs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return await db.select().from(logs).orderBy(desc(logs.timestamp));
   }
 
   async createLog(insertLog: InsertLog): Promise<Log> {
-    const log: Log = { 
-      ...insertLog, 
-      id: this.logIdCounter++, 
-      timestamp: new Date() 
-    };
-    this.logs.push(log);
+    const [log] = await db.insert(logs).values(insertLog).returning();
     return log;
   }
 
   async deleteLog(id: number): Promise<void> {
-    this.logs = this.logs.filter(l => l.id !== id);
+    await db.delete(logs).where(eq(logs.id, id));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

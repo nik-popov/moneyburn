@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useFees } from "@/hooks/use-fees";
 import { useLogs, useCreateLog } from "@/hooks/use-logs";
 import { FeeButton } from "@/components/FeeButton";
@@ -7,8 +8,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Receipt } from "lucide-react";
 
 export default function Home() {
+  const [sessionStart] = useState(new Date());
   const { data: fees, isLoading: isLoadingFees } = useFees();
-  const { data: logs, isLoading: isLoadingLogs } = useLogs();
+  const { data: allLogs, isLoading: isLoadingLogs } = useLogs();
   const createLog = useCreateLog();
   const { toast } = useToast();
 
@@ -42,7 +44,8 @@ export default function Home() {
     );
   }
 
-  const totalCents = logs?.reduce((sum, log) => sum + log.amount, 0) || 0;
+  const sessionLogs = allLogs?.filter(log => new Date(log.timestamp) >= sessionStart) || [];
+  const totalCents = sessionLogs.reduce((sum, log) => sum + log.amount, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8 lg:p-12">
@@ -66,7 +69,7 @@ export default function Home() {
           
           {/* Left Column: Actions & Tab */}
           <div className="lg:col-span-7 space-y-8">
-            <RunningTab totalCents={totalCents} count={logs?.length || 0} />
+            <RunningTab totalCents={totalCents} count={sessionLogs.length} />
             
             <div>
               <h3 className="text-xl font-display font-bold mb-4 flex items-center gap-2">
@@ -98,7 +101,7 @@ export default function Home() {
 
           {/* Right Column: History */}
           <div className="lg:col-span-5">
-            <LogHistory logs={logs || []} />
+            <LogHistory logs={sessionLogs} />
           </div>
         </div>
       </div>
