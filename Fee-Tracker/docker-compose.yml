@@ -9,8 +9,8 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
     ports:
-      - "8090:80"
-      - "8091:8080"
+      - "8095:80"
+      - "8096:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: always
@@ -33,7 +33,7 @@ services:
   db:
     image: postgres:15
     ports:
-      - "5435:5432"
+      - "5436:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
